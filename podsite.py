@@ -1,5 +1,5 @@
 #Radmil Hrbek
-#version 0.2.3
+#version 0.2.4
 
 ERROR1 = "Neplatný znak"
 PRIKAZY = {"1":"\nHostname zařízení:\n\nenable\nconfigure terminal\nhostname (název zařízení)",
@@ -234,10 +234,10 @@ print("program na podsítě\n")
 nabidka = None
 while nabidka != 0:
     while True:
-        print("0. Ukončí program\n1. Vytvoření podsítí\n2. Data o podsítích\n3. Příkazy\n4. Směrovací protokoly\n")
+        print("0. Ukončí program\n1. Vytvoření podsítí\n2. Data o podsítích\n3. Příkazy\n4. Směrovací protokoly\n5. Tabulka prefixů\n")
         try:
             nabidka = int(input("Zadej číslo nabídky: "))
-            if nabidka < 0 or nabidka > 4:
+            if nabidka < 0 or nabidka > 5:
                 continue
         except ValueError:
             print(ERROR1)
@@ -336,3 +336,14 @@ while nabidka != 0:
                     Smerovaci_protokoly()
                 else:
                     print("\nNejsou vytvořeny podsítě.\n")
+            case nabidka if nabidka == 5:
+                print('''Tabulka prefixů:
+Pro prefix
+24 zadej 128
+25 zadej 64
+26 zadej 32
+27 zadej 16
+28 zadej 8
+29 zadej 4
+30 zadej 2
+''')
