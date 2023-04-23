@@ -70,7 +70,7 @@ def menu_zadani_podsiti(zakladni_adresa=None):
         match vyber:
             case 0: break
             case 1: podsite = vytvoreni_podsiti_podle_poctu_hostu()
-            case 2: pass
+            case 2: podsite = vytvoreni_podsiti_podle_prefixu()
         
         return kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite)
 
@@ -213,7 +213,48 @@ def input_zakladni_ipv4_adresy():
     ))
     return zakladni_adresa
 
+def vytvoreni_podsiti_podle_prefixu():
+    print("Zadávej prefixy v rozsahu 24-30, pro ukončení zadej 0.")
+    list_hostu = input_podle_prefixu()
+    return list_hostu
 
+def input_podle_prefixu():
+    zakladni_prefix = 24
+    index_zadavani = 1
+    list_hostu = []
+    while True:
+        
+        while True:
+            try:
+                prefix = int(input("Zadej prefix pro {0}. síť: ".format(index_zadavani)))
+            except ValueError():
+                print(ERROR_ZNAK)
+                continue
+            if prefix == 0:
+                break
+            elif prefix < 24 or prefix > 30:
+                print(ERROR_ROZSAH)
+                continue
+            else:
+                break
+        if prefix == 0:
+            break
+        pocet_hostu = prefix_na_pocet_hostu(prefix)
+        list_hostu.append(pocet_hostu)
+        index_zadavani += 1
+    
+    list_hostu.sort()
+    list_hostu.reverse()
+    print(list_hostu)
+    return list_hostu        
+        
+def prefix_na_pocet_hostu(prefix):
+    posledni_byte_prefixu = 32-prefix
+    pocet_adres = 0
+    for mocnina in range(0, posledni_byte_prefixu):
+        pocet_adres += 2**mocnina
+    return pocet_adres+1
+    
 
 def vytvoreni_podsiti_podle_poctu_hostu():
     print("Zadávej počet hostů v síti, pro ukončení zadej 0.")
