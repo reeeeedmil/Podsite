@@ -126,8 +126,8 @@ def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
     return adresy_siti
 
 def pocet_hostu_na_prefix(pocet_hostu):
-    pocet_hostu = bin(pocet_hostu)
-    pocet_hostu = str(pocet_hostu)
+    pocet_hostu = 256-pocet_hostu
+    pocet_hostu = str(bin(pocet_hostu))
     prefix = 24
     pocet_jednicek = 0
     for cislo in pocet_hostu:
@@ -135,6 +135,14 @@ def pocet_hostu_na_prefix(pocet_hostu):
             pocet_jednicek += 1
     prefix += pocet_jednicek
     return prefix
+
+def prefix_na_pocet_hostu(prefix):
+    posledni_byte_prefixu = 32-prefix
+    pocet_adres = 0
+    for mocnina in range(0, posledni_byte_prefixu):
+        pocet_adres += 2**mocnina
+    return pocet_adres+1
+
 
 
 def input_zakladni_ipv4_adresy():
@@ -247,13 +255,6 @@ def input_podle_prefixu():
     list_hostu.reverse()
     print(list_hostu)
     return list_hostu        
-        
-def prefix_na_pocet_hostu(prefix):
-    posledni_byte_prefixu = 32-prefix
-    pocet_adres = 0
-    for mocnina in range(0, posledni_byte_prefixu):
-        pocet_adres += 2**mocnina
-    return pocet_adres+1
     
 
 def vytvoreni_podsiti_podle_poctu_hostu():
