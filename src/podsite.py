@@ -34,13 +34,14 @@ def menu_hlavni():
 0 - Konec programu
 1 - Zadání základní IPv4 adresy
 2 - Zadání podsítí
-3 - Zobrazení podsítí''')
+3 - Zobrazení podsítí
+4 - Zapsání do Adresace.txt''')
         while True:
             try:
                 vyber = int(input("Zadej výběr: "))
             except ValueError():
                 print(ERROR_ZNAK)
-            if vyber >= 0 and vyber <= 3:
+            if vyber >= 0 and vyber <= 4:
                 break
             else:
                 print(ERROR_CISLO)
@@ -49,6 +50,7 @@ def menu_hlavni():
             case 1: zakladni_adresa = kontrola_pritomnosti(input_zakladni_ipv4_adresy(), zakladni_adresa) 
             case 2: adresy_podsite = kontrola_pritomnosti(menu_zadani_podsiti(zakladni_adresa), adresy_podsite)
             case 3: zobrazeni_podsiti(adresy_podsite)
+            case 4: zapsani_do_txt(adresy_podsite)
 
 def menu_zadani_podsiti(zakladni_adresa=None):
     vyber = None
@@ -333,22 +335,29 @@ def kontrola_pritomnosti(kontrolovana_data, predchozi_data=None):
         return kontrolovana_data
 
 
+def zapsani_do_txt(site):
+    textak=open('Adresace.txt', "w+", encoding="utf=16")
+    for index in range(0, len(site)):
+        textak.write('''Síť {0}.
+Adresa sítě: {1}.{2}.{3}.{4} /{5}
+Adresa broadcast: {1}.{2}.{3}.{6} /{5}
+Počet adres: {7}
+Počet hostů: {8}
+
+'''.format(
+    index+1,
+    site[index].prvni_byte, site[index].druhy_byte, site[index].treti_byte, site[index].ctvrty_byte,
+    site[index].prefix,
+    (site[index].ctvrty_byte+site[index].pocet_hostu-1),
+    site[index].pocet_hostu,
+    site[index].pocet_hostu-2))
+    textak.close()
+
+
+
+
         
 
 # MAIN
 print("Program na podsítě")
 menu_hlavni()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
