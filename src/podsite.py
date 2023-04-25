@@ -20,7 +20,8 @@ class Sit:
     def update_prefix(self, prefix, pocet_hostu):
         self.prefix = prefix
         self.pocet_hostu = pocet_hostu
-        
+        self.posledni_byte_masky = pocet_hostu_na_masku(pocet_hostu)
+        self.posledni_byte_wildcard_masky = pocet_hostu_na_wildcard_masku(pocet_hostu)
 
 
 def menu_hlavni():
@@ -88,17 +89,23 @@ def zobrazeni_podsiti(adresy_podsite):
         elif vyber >= 1 and vyber <= len(adresy_podsite):
             vyber-=1
             print('''
+                  
 Síť {0}.
 Adresa sítě: {1}.{2}.{3}.{4} /{5}
 Adresa broadcast: {1}.{2}.{3}.{6} /{5}
 Počet adres: {7}
-Počet hostů: {8}'''.format(
+Počet hostů: {8}
+Maska: 255.255.255.{9}
+Wildcard maska: 0.0.0.{10}
+'''.format(
     vyber+1,
     adresy_podsite[vyber].prvni_byte, adresy_podsite[vyber].druhy_byte, adresy_podsite[vyber].treti_byte, adresy_podsite[vyber].ctvrty_byte,
     adresy_podsite[vyber].prefix,
     (adresy_podsite[vyber].ctvrty_byte+adresy_podsite[vyber].pocet_hostu-1),
     adresy_podsite[vyber].pocet_hostu,
-    adresy_podsite[vyber].pocet_hostu-2
+    adresy_podsite[vyber].pocet_hostu-2,
+    adresy_podsite[vyber].posledni_byte_masky,
+    adresy_podsite[vyber].posledni_byte_wildcard_masky
 ))
             
 
@@ -145,7 +152,11 @@ def prefix_na_pocet_hostu(prefix):
         pocet_adres += 2**mocnina
     return pocet_adres+1
 
+def pocet_hostu_na_masku(pocet_hostu):
+    return (256-pocet_hostu)
 
+def pocet_hostu_na_wildcard_masku(pocet_hostu):
+    return (pocet_hostu-1)
 
 def input_zakladni_ipv4_adresy():
     zakladni_adresa = Sit()
@@ -343,6 +354,9 @@ Adresa sítě: {1}.{2}.{3}.{4} /{5}
 Adresa broadcast: {1}.{2}.{3}.{6} /{5}
 Počet adres: {7}
 Počet hostů: {8}
+Maska: 255.255.255.{9}
+Wildcard maska: 0.0.0.{10}
+
 
 '''.format(
     index+1,
@@ -350,8 +364,12 @@ Počet hostů: {8}
     site[index].prefix,
     (site[index].ctvrty_byte+site[index].pocet_hostu-1),
     site[index].pocet_hostu,
-    site[index].pocet_hostu-2))
+    site[index].pocet_hostu-2,
+    site[index].posledni_byte_masky,
+    site[index].posledni_byte_wildcard_masky
+    ))
     textak.close()
+    print("Zapsání úspěšné.\n")
 
 
 
