@@ -35,12 +35,12 @@ class Sit:
         self.treti_byte = treti
         self.ctvrty_byte = ctvrty
             
-    def update_broadcast(self, pocet_hostu, soucet_ctvrtych_bytu):
+    def update_broadcast(self, pocet_hostu):
         zvyseni_prvniho_bytu, zvyseni_druheho_bytu, zvyseni_tretiho_bytu = 0, 0, 0
         prvni_byte = self.prvni_byte
         druhy_byte = self.druhy_byte
         treti_byte = self.treti_byte
-        ctvrty_byte = soucet_ctvrtych_bytu
+        ctvrty_byte = pocet_hostu+self.ctvrty_byte
         pouzite_byty = 0
         posledni_zvetseni = 0
     
@@ -194,12 +194,12 @@ def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
         zakladni_adresa = Sit()
     adresy_siti = []
     soucet_ctvrtych_bytu = 0
+    
     for cislo_site in range(0, len(podsite)):
         adresa = Sit()
-        if cislo_site == 0:
-            adresa.update_bytes(zakladni_adresa.prvni_byte, zakladni_adresa.druhy_byte, zakladni_adresa.treti_byte, zakladni_adresa.ctvrty_byte)
-        else:
-            adresa.update_bytes(zakladni_adresa.prvni_byte, zakladni_adresa.druhy_byte, zakladni_adresa.treti_byte, soucet_ctvrtych_bytu)
+        
+        adresa.update_bytes(zakladni_adresa.prvni_byte, zakladni_adresa.druhy_byte, zakladni_adresa.treti_byte, soucet_ctvrtych_bytu)
+        soucet_ctvrtych_bytu += podsite[cislo_site]
         
         adresa.update_prefix(pocet_hostu_na_prefix(podsite[cislo_site]), podsite[cislo_site])
         
@@ -209,9 +209,9 @@ def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
         prvni_byte_wildcard, druhy_byte_wildcard, treti_byte_wildcard, ctvrty_byte_wildcard = pocet_hostu_na_wildcard_masku(podsite[cislo_site])
         adresa.update_wildcard_maska(prvni_byte_wildcard, druhy_byte_wildcard, treti_byte_wildcard, ctvrty_byte_wildcard)
         
-        soucet_ctvrtych_bytu += podsite[cislo_site]
         
-        adresa.update_broadcast(podsite[cislo_site], soucet_ctvrtych_bytu)
+        
+        adresa.update_broadcast(podsite[cislo_site])
         
         adresy_siti.append(adresa)
         
