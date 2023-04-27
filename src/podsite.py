@@ -12,21 +12,96 @@ class Sit:
         self.ctvrty_byte = 0
         
     def update_bytes(self, prvni, druhy, treti, ctvrty):
+        while True:
+            if ctvrty >= 256:
+                treti += 1
+                ctvrty -= 256
+            else: break
+        
+        while True:
+            if treti >= 256:
+                druhy += 1
+                treti -= 256
+            else: break
+        
+        while True:
+            if druhy >= 256:
+                prvni += 1
+                druhy -= 256
+            else: break
+            
         self.prvni_byte = prvni
         self.druhy_byte = druhy
         self.treti_byte = treti
         self.ctvrty_byte = ctvrty
+            
+    def update_broadcast(self, pocet_hostu, soucet_ctvrtych_bytu):
+        zvyseni_prvniho_bytu, zvyseni_druheho_bytu, zvyseni_tretiho_bytu = 0, 0, 0
+        prvni_byte = self.prvni_byte
+        druhy_byte = self.druhy_byte
+        treti_byte = self.treti_byte
+        ctvrty_byte = soucet_ctvrtych_bytu
+        pouzite_byty = 0
+        posledni_zvetseni = 0
+    
+        while ctvrty_byte >= 256:
+            ctvrty_byte -= 256
+            zvyseni_tretiho_bytu += 1
+        treti_byte += zvyseni_tretiho_bytu
+    
+        while treti_byte >= 256:
+            treti_byte -= 256
+            zvyseni_druheho_bytu += 1
+        druhy_byte += zvyseni_druheho_bytu
+    
+        while druhy_byte >= 256:
+            druhy_byte -= 256
+            zvyseni_prvniho_bytu += 1
+        prvni_byte += zvyseni_prvniho_bytu
+
+        if prvni_byte != self.prvni_byte:
+            posledni_zvetseni = 1
+        elif druhy_byte != self.druhy_byte:
+            posledni_zvetseni = 2
+        elif treti_byte != self.treti_byte:
+            posledni_zvetseni = 3
+        else:
+            posledni_zvetseni = 4
+        
+        
+        match posledni_zvetseni:
+            case 4: ctvrty_byte-=1
+            case 3: treti_byte-=1; ctvrty_byte=255 
+            case 2: druhy_byte-=1; treti_byte=255; ctvrty_byte=255
+            case 1: prvni_byte-=1; druhy_byte=255; treti_byte=255; ctvrty_byte=255
+        
+        
+        self.prvni_byte_broadcast = prvni_byte
+        self.druhy_byte_broadcast = druhy_byte
+        self.treti_byte_broadcast  = treti_byte
+        self.ctvrty_byte_broadcast = ctvrty_byte
         
     def update_prefix(self, prefix, pocet_hostu):
         self.prefix = prefix
         self.pocet_hostu = pocet_hostu
-        self.posledni_byte_masky = pocet_hostu_na_masku(pocet_hostu)
-        self.posledni_byte_wildcard_masky = pocet_hostu_na_wildcard_masku(pocet_hostu)
-
+        
+    def update_maska(self, prvni_byte_masky, druhy_byte_masky, treti_byte_masky, ctvrty_byte_masky):
+        self.prvni_byte_masky = prvni_byte_masky
+        self.druhy_byte_masky = druhy_byte_masky
+        self.treti_byte_masky = treti_byte_masky
+        self.ctvrty_byte_masky = ctvrty_byte_masky
+        
+    def update_wildcard_maska(self, prvni_byte_wildcard, druhy_byte_wildcard, treti_byte_wildcard, ctvrty_byte_wildcard):
+        self.prvni_byte_wildcard_masky = prvni_byte_wildcard
+        self.druhy_byte_wildcard_masky = druhy_byte_wildcard
+        self.treti_byte_wildcard_masky = treti_byte_wildcard
+        self.ctvrty_byte_wildcard_masky = ctvrty_byte_wildcard
+        
+        
 
 def menu_hlavni():
     zakladni_adresa = None
-    vyber = None
+    vyber = -1
     podsite = None
     adresy_podsite = None
     print("HLAVNÍ MENU")
@@ -40,7 +115,7 @@ def menu_hlavni():
         while True:
             try:
                 vyber = int(input("Zadej výběr: "))
-            except ValueError():
+            except:
                 print(ERROR_ZNAK)
             if vyber >= 0 and vyber <= 4:
                 break
@@ -54,7 +129,7 @@ def menu_hlavni():
             case 4: zapsani_do_txt(adresy_podsite)
 
 def menu_zadani_podsiti(zakladni_adresa=None):
-    vyber = None
+    vyber = -1
     podsite = None
     while vyber != 0:
         print('''
@@ -64,7 +139,7 @@ def menu_zadani_podsiti(zakladni_adresa=None):
         while True:
             try:
                 vyber = int(input("Zadej výběr: "))
-            except ValueError():
+            except:
                 print(ERROR_ZNAK)
             if vyber >= 0 and vyber <= 2:
                 break
@@ -82,7 +157,7 @@ def zobrazeni_podsiti(adresy_podsite):
     while True:
         try:
             vyber = int(input("Zadej číslo: "))
-        except ValueError():
+        except:
             print(ERROR_ZNAK)
         if vyber == 0:
             break
@@ -92,57 +167,68 @@ def zobrazeni_podsiti(adresy_podsite):
                   
 Síť {0}.
 Adresa sítě: {1}.{2}.{3}.{4} /{5}
-Adresa broadcast: {1}.{2}.{3}.{6} /{5}
-Počet adres: {7}
-Počet hostů: {8}
-Maska: 255.255.255.{9}
-Wildcard maska: 0.0.0.{10}
+Adresa broadcast: {6}.{7}.{8}.{9} /{5}
+Počet adres: {10}
+Počet hostů: {11}
+Maska: {12}.{13}.{14}.{15}
+Wildcard maska: {16}.{17}.{18}.{19}
 '''.format(
     vyber+1,
     adresy_podsite[vyber].prvni_byte, adresy_podsite[vyber].druhy_byte, adresy_podsite[vyber].treti_byte, adresy_podsite[vyber].ctvrty_byte,
     adresy_podsite[vyber].prefix,
-    (adresy_podsite[vyber].ctvrty_byte+adresy_podsite[vyber].pocet_hostu-1),
+    
+    adresy_podsite[vyber].prvni_byte_broadcast, adresy_podsite[vyber].druhy_byte_broadcast,
+    adresy_podsite[vyber].treti_byte_broadcast, adresy_podsite[vyber].ctvrty_byte_broadcast,
+    
     adresy_podsite[vyber].pocet_hostu,
     adresy_podsite[vyber].pocet_hostu-2,
-    adresy_podsite[vyber].posledni_byte_masky,
-    adresy_podsite[vyber].posledni_byte_wildcard_masky
+    adresy_podsite[vyber].prvni_byte_masky, adresy_podsite[vyber].druhy_byte_masky,
+    adresy_podsite[vyber].treti_byte_masky, adresy_podsite[vyber].ctvrty_byte_masky,
+    
+    adresy_podsite[vyber].prvni_byte_wildcard_masky, adresy_podsite[vyber].druhy_byte_wildcard_masky,
+    adresy_podsite[vyber].treti_byte_wildcard_masky, adresy_podsite[vyber].ctvrty_byte_wildcard_masky
 ))
-            
-
-def vypocet_adresy_site(cislo_site, podsite):
-    soucet_hostu = 0
-    zvyseni_tretiho_bytu = 0
-    for i in range(0, cislo_site):
-        soucet_hostu += podsite[i]
-        if soucet_hostu >= 256:
-            soucet_hostu -= 256
-            zvyseni_tretiho_bytu += 1
-    return soucet_hostu, zvyseni_tretiho_bytu
-        
 
 def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
     if zakladni_adresa == None:
         zakladni_adresa = Sit()
     adresy_siti = []
+    soucet_ctvrtych_bytu = 0
     for cislo_site in range(0, len(podsite)):
-        adresa_site, zvyseni_tretiho_bytu = vypocet_adresy_site(cislo_site, podsite)
         adresa = Sit()
-        adresa.update_bytes(zakladni_adresa.prvni_byte, zakladni_adresa.druhy_byte, zakladni_adresa.treti_byte+zvyseni_tretiho_bytu, adresa_site)
+        if cislo_site == 0:
+            adresa.update_bytes(zakladni_adresa.prvni_byte, zakladni_adresa.druhy_byte, zakladni_adresa.treti_byte, zakladni_adresa.ctvrty_byte)
+        else:
+            adresa.update_bytes(zakladni_adresa.prvni_byte, zakladni_adresa.druhy_byte, zakladni_adresa.treti_byte, soucet_ctvrtych_bytu)
+        
         adresa.update_prefix(pocet_hostu_na_prefix(podsite[cislo_site]), podsite[cislo_site])
         
+        prvni_byte_masky, druhy_byte_masky, treti_byte_masky, ctvrty_byte_masky = pocet_hostu_na_masku(podsite[cislo_site])
+        adresa.update_maska(prvni_byte_masky, druhy_byte_masky, treti_byte_masky, ctvrty_byte_masky)
+        
+        prvni_byte_wildcard, druhy_byte_wildcard, treti_byte_wildcard, ctvrty_byte_wildcard = pocet_hostu_na_wildcard_masku(podsite[cislo_site])
+        adresa.update_wildcard_maska(prvni_byte_wildcard, druhy_byte_wildcard, treti_byte_wildcard, ctvrty_byte_wildcard)
+        
+        soucet_ctvrtych_bytu += podsite[cislo_site]
+        
+        adresa.update_broadcast(podsite[cislo_site], soucet_ctvrtych_bytu)
         
         adresy_siti.append(adresa)
+        
     return adresy_siti
 
 def pocet_hostu_na_prefix(pocet_hostu):
-    pocet_hostu = 256-pocet_hostu
-    pocet_hostu = str(bin(pocet_hostu))
-    prefix = 24
-    pocet_jednicek = 0
-    for cislo in pocet_hostu:
-        if cislo == '1':
-            pocet_jednicek += 1
-    prefix += pocet_jednicek
+    prefix = 32
+    puvodni_velikost = pocet_hostu
+    mocnina = 0
+    while True:
+        pocet_hostu = puvodni_velikost
+        pocet_hostu -= 2**mocnina
+        if pocet_hostu <= 0:
+            break
+        mocnina += 1
+        
+    prefix -= mocnina
     return prefix
 
 def prefix_na_pocet_hostu(prefix):
@@ -152,18 +238,88 @@ def prefix_na_pocet_hostu(prefix):
         pocet_adres += 2**mocnina
     return pocet_adres+1
 
-def pocet_hostu_na_masku(pocet_hostu):
-    return (256-pocet_hostu)
+
+        
+    return prvni_byte, druhy_byte, treti_byte, ctvrty_byte
 
 def pocet_hostu_na_wildcard_masku(pocet_hostu):
-    return (pocet_hostu-1)
+    prefix = pocet_hostu_na_prefix(pocet_hostu)
+    prvni_byte_wildcard_masky = 0
+    druhy_byte_wildcard_masky = 0
+    treti_byte_wildcard_masky = 0
+    ctvrty_byte_wildcard_masky = 0
+    soucet_pouzitych_cisel_prefixu = 0
+    
+    if prefix < 8:
+        mocnina = 8-prefix-soucet_pouzitych_cisel_prefixu
+        prvni_byte_wildcard_masky = 0+(2**mocnina)-1
+        soucet_pouzitych_cisel_prefixu += mocnina
+        
+    
+    if prefix < 16:
+        mocnina = 16-prefix-soucet_pouzitych_cisel_prefixu
+        druhy_byte_wildcard_masky = 0+(2**mocnina)-1
+        soucet_pouzitych_cisel_prefixu += mocnina
+        
+        
+    if prefix < 24:
+        mocnina = 24-prefix-soucet_pouzitych_cisel_prefixu
+        treti_byte_wildcard_masky = 0+(2**mocnina)-1
+        soucet_pouzitych_cisel_prefixu += mocnina
+        
+    
+    if prefix < 32:
+        mocnina = 32-prefix-soucet_pouzitych_cisel_prefixu
+        ctvrty_byte_wildcard_masky = 0+(2**mocnina)-1
+        soucet_pouzitych_cisel_prefixu += mocnina
+        
+                      
+    return prvni_byte_wildcard_masky, druhy_byte_wildcard_masky, treti_byte_wildcard_masky, ctvrty_byte_wildcard_masky 
+
+def pocet_hostu_na_masku(pocet_hostu):
+    prefix = pocet_hostu_na_prefix(pocet_hostu)
+    prvni_byte_masky = 255
+    druhy_byte_masky = 255
+    treti_byte_masky = 255
+    ctvrty_byte_masky = 255
+    soucet_pouzitych_cisel_prefixu = 0
+    
+    if prefix < 8:
+        mocnina = 8-prefix-soucet_pouzitych_cisel_prefixu
+        prvni_byte_masky = 255-(2**mocnina)+1
+        soucet_pouzitych_cisel_prefixu += mocnina
+        
+    
+    if prefix < 16:
+        mocnina = 16-prefix-soucet_pouzitych_cisel_prefixu
+        druhy_byte_masky = 255-(2**mocnina)+1
+        soucet_pouzitych_cisel_prefixu += mocnina
+        
+        
+    if prefix < 24:
+        mocnina = 24-prefix-soucet_pouzitych_cisel_prefixu
+        treti_byte_masky = 255-(2**mocnina)+1
+        soucet_pouzitych_cisel_prefixu += mocnina
+        
+    
+    if prefix < 32:
+        mocnina = 32-prefix-soucet_pouzitych_cisel_prefixu
+        ctvrty_byte_masky = 255-(2**mocnina)+1
+        soucet_pouzitych_cisel_prefixu += mocnina
+        
+                      
+    return prvni_byte_masky, druhy_byte_masky, treti_byte_masky, ctvrty_byte_masky    
 
 def input_zakladni_ipv4_adresy():
     zakladni_adresa = Sit()
+    prvni_byte = -1
+    druhy_byte = -1
+    treti_byte = -1
+    ctvrty_byte = -1
     while True:
         try:
             prvni_byte = int(input("Zadej první byte: "))
-        except ValueError():
+        except:
             print(ERROR_ZNAK)
         if prvni_byte >= 0 and prvni_byte <= 255:
             break
@@ -171,11 +327,11 @@ def input_zakladni_ipv4_adresy():
             print(ERROR_ROZSAH)
             continue
 
-
+ 
     while True:
         try:
             druhy_byte = int(input("Zadej druhý byte: "))
-        except ValueError():
+        except:
             print(ERROR_ZNAK)
         if druhy_byte >= 0 and druhy_byte <= 255:
             break
@@ -187,7 +343,7 @@ def input_zakladni_ipv4_adresy():
     while True:
         try:
             treti_byte = int(input("Zadej třetí byte: "))
-        except ValueError():
+        except:
             print(ERROR_ZNAK)
         if treti_byte >= 0 and treti_byte <= 255:
             break
@@ -199,14 +355,14 @@ def input_zakladni_ipv4_adresy():
     while True:
         try:
             ctvrty_byte = int(input("Zadej čtvrtý byte: "))
-        except ValueError():
+        except:
             print(ERROR_ZNAK)
         if ctvrty_byte > 0 and ctvrty_byte <= 255:
             print("Jsi si jistý, že chceš čtvrtý byte jiný než 0? (A/N)")
             
             try:
                 vyber = str(input("Zadej znak: "))
-            except ValueError():
+            except:
                 print(ERROR_ZNAK)
             
             if vyber == 'A':
@@ -235,7 +391,7 @@ def input_zakladni_ipv4_adresy():
     return zakladni_adresa
 
 def vytvoreni_podsiti_podle_prefixu():
-    print("Zadávej prefixy v rozsahu 24-30, pro ukončení zadej 0.")
+    print("Zadávej prefixy v rozsahu 1-30, pro ukončení zadej 0.")
     list_hostu = input_podle_prefixu()
     return list_hostu
 
@@ -248,12 +404,12 @@ def input_podle_prefixu():
         while True:
             try:
                 prefix = int(input("Zadej prefix pro {0}. síť: ".format(index_zadavani)))
-            except ValueError():
+            except:
                 print(ERROR_ZNAK)
                 continue
             if prefix == 0:
                 break
-            elif prefix < 24 or prefix > 30:
+            elif prefix < 0 or prefix > 30:
                 print(ERROR_ROZSAH)
                 continue
             else:
@@ -284,12 +440,12 @@ def input_podle_hostu():
         while True:
             try:
                 pocet_hostu = int(input("Zadej počet hostů pro {0}. síť: ".format(index_zadavani)))
-            except ValueError():
+            except:
                 print(ERROR_ZNAK)
                 continue
             if pocet_hostu == 0:
                 break
-            elif pocet_hostu <= 1 or pocet_hostu >= 254:
+            elif pocet_hostu <= 1 or pocet_hostu >= 2147483645:
                 print(ERROR_ROZSAH)
                 continue
             else:
@@ -324,7 +480,7 @@ def kontrola_pritomnosti(kontrolovana_data, predchozi_data=None):
         while True:
             try:
                 vyber = str(input("Zadejte znak: "))
-            except ValueError():
+            except:
                 print(ERROR_ZNAK)
                 continue
             
@@ -351,30 +507,30 @@ def zapsani_do_txt(site):
     for index in range(0, len(site)):
         textak.write('''Síť {0}.
 Adresa sítě: {1}.{2}.{3}.{4} /{5}
-Adresa broadcast: {1}.{2}.{3}.{6} /{5}
-Počet adres: {7}
-Počet hostů: {8}
-Maska: 255.255.255.{9}
-Wildcard maska: 0.0.0.{10}
-
+Adresa broadcast: {6}.{7}.{8}.{9} /{5}
+Počet adres: {10}
+Počet hostů: {11}
+Maska: {12}.{13}.{14}.{15}
+Wildcard maska: {16}.{17}.{18}.{19}
 
 '''.format(
     index+1,
     site[index].prvni_byte, site[index].druhy_byte, site[index].treti_byte, site[index].ctvrty_byte,
     site[index].prefix,
-    (site[index].ctvrty_byte+site[index].pocet_hostu-1),
+    
+    site[index].prvni_byte_broadcast, site[index].druhy_byte_broadcast,
+    site[index].treti_byte_broadcast, site[index].ctvrty_byte_broadcast,
+    
     site[index].pocet_hostu,
     site[index].pocet_hostu-2,
-    site[index].posledni_byte_masky,
-    site[index].posledni_byte_wildcard_masky
-    ))
+    site[index].prvni_byte_masky, site[index].druhy_byte_masky,
+    site[index].treti_byte_masky, site[index].ctvrty_byte_masky,
+    
+    site[index].prvni_byte_wildcard_masky, site[index].druhy_byte_wildcard_masky,
+    site[index].treti_byte_wildcard_masky, site[index].ctvrty_byte_wildcard_masky))
     textak.close()
     print("Zapsání úspěšné.\n")
 
-
-
-
-        
 
 # MAIN
 print("Program na podsítě")
