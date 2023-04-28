@@ -265,7 +265,7 @@ def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
         adresa.update_bytes(zakladni_adresa.prvni_byte, zakladni_adresa.druhy_byte, zakladni_adresa.treti_byte, soucet_ctvrtych_bytu)
         soucet_ctvrtych_bytu += podsite[cislo_site]
         
-        adresa.update_prefix(pocet_hostu_na_prefix(podsite[cislo_site]), podsite[cislo_site])
+        adresa.update_prefix(pocet_adres_na_prefix(podsite[cislo_site]), podsite[cislo_site])
         
         adresa.update_maska()
         
@@ -279,18 +279,11 @@ def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
         
     return adresy_siti
 
-def pocet_hostu_na_prefix(pocet_hostu):
-    prefix = 32
-    puvodni_velikost = pocet_hostu
-    mocnina = 0
-    while True:
-        pocet_hostu = puvodni_velikost
-        pocet_hostu -= 2**mocnina
-        if pocet_hostu <= 0:
-            break
-        mocnina += 1
-        
-    prefix -= mocnina
+def pocet_adres_na_prefix(pocet_hostu):
+    pocet_hostu -= 1
+    pocet_hostu = bin(pocet_hostu)
+    nuly_prefixu = len(pocet_hostu)-2 #toto je protože bin() dá do stringu 0b před číslo -> musí také se odečíst od délky
+    prefix = 32-nuly_prefixu
     return prefix
 
 def prefix_na_pocet_hostu(prefix):
@@ -459,14 +452,12 @@ def input_podle_hostu():
 
         
 def standardizace_velikosti(velikost_site):
-    puvodni_velikost = velikost_site+2
-    index = 0
-    while True:
-        velikost_site = puvodni_velikost
-        velikost_site -= 2**index
-        index += 1
-        if velikost_site <= 0:
-            return (2**(index-1))
+    velikost_site += 1  #1, ne 2, protože tím změním jenom poslední bit -> podsíť nebude mít nechtěné zvětšení se
+                        #například 2 by potom bylo 4 -> to už je 100, ne 11, tudíž by se to zařadilo do velikosti podsítě 8 adres
+    velikost_site = bin(velikost_site)
+    mocnina = len(velikost_site)-2 #toto je protože bin() dá do stringu 0b před číslo -> musí se odečíst od délky
+    pocet_adres = 2**mocnina
+    return pocet_adres
         
         
 def kontrola_pritomnosti(kontrolovana_data, predchozi_data=None):
