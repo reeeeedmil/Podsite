@@ -85,17 +85,77 @@ class Sit:
         self.prefix = prefix
         self.pocet_hostu = pocet_hostu
         
-    def update_maska(self, prvni_byte_masky, druhy_byte_masky, treti_byte_masky, ctvrty_byte_masky):
+    def update_maska(self):
+        prvni_byte_masky = 255
+        druhy_byte_masky = 255
+        treti_byte_masky = 255
+        ctvrty_byte_masky = 255
+        soucet_pouzitych_cisel_prefixu = 0
+    
+        if self.prefix < 8:
+            mocnina = 8-self.prefix-soucet_pouzitych_cisel_prefixu
+            prvni_byte_masky = 255-(2**mocnina)+1
+            soucet_pouzitych_cisel_prefixu += mocnina
+        
+    
+        if self.prefix < 16:
+            mocnina = 16-self.prefix-soucet_pouzitych_cisel_prefixu
+            druhy_byte_masky = 255-(2**mocnina)+1
+            soucet_pouzitych_cisel_prefixu += mocnina
+        
+        
+        if self.prefix < 24:
+            mocnina = 24-self.prefix-soucet_pouzitych_cisel_prefixu
+            treti_byte_masky = 255-(2**mocnina)+1
+            soucet_pouzitych_cisel_prefixu += mocnina
+        
+    
+        if self.prefix < 32:
+            mocnina = 32-self.prefix-soucet_pouzitych_cisel_prefixu
+            ctvrty_byte_masky = 255-(2**mocnina)+1
+            soucet_pouzitych_cisel_prefixu += mocnina
+        
+                      
         self.prvni_byte_masky = prvni_byte_masky
         self.druhy_byte_masky = druhy_byte_masky
         self.treti_byte_masky = treti_byte_masky
         self.ctvrty_byte_masky = ctvrty_byte_masky
         
-    def update_wildcard_maska(self, prvni_byte_wildcard, druhy_byte_wildcard, treti_byte_wildcard, ctvrty_byte_wildcard):
-        self.prvni_byte_wildcard_masky = prvni_byte_wildcard
-        self.druhy_byte_wildcard_masky = druhy_byte_wildcard
-        self.treti_byte_wildcard_masky = treti_byte_wildcard
-        self.ctvrty_byte_wildcard_masky = ctvrty_byte_wildcard
+    def update_wildcard_maska(self):
+        prvni_byte_wildcard_masky = 0
+        druhy_byte_wildcard_masky = 0
+        treti_byte_wildcard_masky = 0
+        ctvrty_byte_wildcard_masky = 0
+        soucet_pouzitych_cisel_prefixu = 0
+    
+        if self.prefix < 8:
+            mocnina = 8-self.prefix-soucet_pouzitych_cisel_prefixu
+            prvni_byte_wildcard_masky = 0+(2**mocnina)-1
+            soucet_pouzitych_cisel_prefixu += mocnina
+        
+    
+        if self.prefix < 16:
+            mocnina = 16-self.prefix-soucet_pouzitych_cisel_prefixu
+            druhy_byte_wildcard_masky = 0+(2**mocnina)-1
+            soucet_pouzitych_cisel_prefixu += mocnina
+        
+        
+        if self.prefix < 24:
+            mocnina = 24-self.prefix-soucet_pouzitych_cisel_prefixu
+            treti_byte_wildcard_masky = 0+(2**mocnina)-1
+            soucet_pouzitych_cisel_prefixu += mocnina
+        
+    
+        if self.prefix < 32:
+            mocnina = 32-self.prefix-soucet_pouzitych_cisel_prefixu
+            ctvrty_byte_wildcard_masky = 0+(2**mocnina)-1
+            soucet_pouzitych_cisel_prefixu += mocnina
+        
+                      
+        self.prvni_byte_wildcard_masky = prvni_byte_wildcard_masky
+        self.druhy_byte_wildcard_masky = druhy_byte_wildcard_masky
+        self.treti_byte_wildcard_masky = treti_byte_wildcard_masky
+        self.ctvrty_byte_wildcard_masky = ctvrty_byte_wildcard_masky 
         
         
 
@@ -203,11 +263,9 @@ def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
         
         adresa.update_prefix(pocet_hostu_na_prefix(podsite[cislo_site]), podsite[cislo_site])
         
-        prvni_byte_masky, druhy_byte_masky, treti_byte_masky, ctvrty_byte_masky = pocet_hostu_na_masku(podsite[cislo_site])
-        adresa.update_maska(prvni_byte_masky, druhy_byte_masky, treti_byte_masky, ctvrty_byte_masky)
+        adresa.update_maska()
         
-        prvni_byte_wildcard, druhy_byte_wildcard, treti_byte_wildcard, ctvrty_byte_wildcard = pocet_hostu_na_wildcard_masku(podsite[cislo_site])
-        adresa.update_wildcard_maska(prvni_byte_wildcard, druhy_byte_wildcard, treti_byte_wildcard, ctvrty_byte_wildcard)
+        adresa.update_wildcard_maska()
         
         
         
@@ -242,73 +300,6 @@ def prefix_na_pocet_hostu(prefix):
         
     return prvni_byte, druhy_byte, treti_byte, ctvrty_byte
 
-def pocet_hostu_na_wildcard_masku(pocet_hostu):
-    prefix = pocet_hostu_na_prefix(pocet_hostu)
-    prvni_byte_wildcard_masky = 0
-    druhy_byte_wildcard_masky = 0
-    treti_byte_wildcard_masky = 0
-    ctvrty_byte_wildcard_masky = 0
-    soucet_pouzitych_cisel_prefixu = 0
-    
-    if prefix < 8:
-        mocnina = 8-prefix-soucet_pouzitych_cisel_prefixu
-        prvni_byte_wildcard_masky = 0+(2**mocnina)-1
-        soucet_pouzitych_cisel_prefixu += mocnina
-        
-    
-    if prefix < 16:
-        mocnina = 16-prefix-soucet_pouzitych_cisel_prefixu
-        druhy_byte_wildcard_masky = 0+(2**mocnina)-1
-        soucet_pouzitych_cisel_prefixu += mocnina
-        
-        
-    if prefix < 24:
-        mocnina = 24-prefix-soucet_pouzitych_cisel_prefixu
-        treti_byte_wildcard_masky = 0+(2**mocnina)-1
-        soucet_pouzitych_cisel_prefixu += mocnina
-        
-    
-    if prefix < 32:
-        mocnina = 32-prefix-soucet_pouzitych_cisel_prefixu
-        ctvrty_byte_wildcard_masky = 0+(2**mocnina)-1
-        soucet_pouzitych_cisel_prefixu += mocnina
-        
-                      
-    return prvni_byte_wildcard_masky, druhy_byte_wildcard_masky, treti_byte_wildcard_masky, ctvrty_byte_wildcard_masky 
-
-def pocet_hostu_na_masku(pocet_hostu):
-    prefix = pocet_hostu_na_prefix(pocet_hostu)
-    prvni_byte_masky = 255
-    druhy_byte_masky = 255
-    treti_byte_masky = 255
-    ctvrty_byte_masky = 255
-    soucet_pouzitych_cisel_prefixu = 0
-    
-    if prefix < 8:
-        mocnina = 8-prefix-soucet_pouzitych_cisel_prefixu
-        prvni_byte_masky = 255-(2**mocnina)+1
-        soucet_pouzitych_cisel_prefixu += mocnina
-        
-    
-    if prefix < 16:
-        mocnina = 16-prefix-soucet_pouzitych_cisel_prefixu
-        druhy_byte_masky = 255-(2**mocnina)+1
-        soucet_pouzitych_cisel_prefixu += mocnina
-        
-        
-    if prefix < 24:
-        mocnina = 24-prefix-soucet_pouzitych_cisel_prefixu
-        treti_byte_masky = 255-(2**mocnina)+1
-        soucet_pouzitych_cisel_prefixu += mocnina
-        
-    
-    if prefix < 32:
-        mocnina = 32-prefix-soucet_pouzitych_cisel_prefixu
-        ctvrty_byte_masky = 255-(2**mocnina)+1
-        soucet_pouzitych_cisel_prefixu += mocnina
-        
-                      
-    return prvni_byte_masky, druhy_byte_masky, treti_byte_masky, ctvrty_byte_masky    
 
 def input_zakladni_ipv4_adresy():
     zakladni_adresa = Sit()
