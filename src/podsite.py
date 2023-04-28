@@ -213,7 +213,11 @@ def menu_zadani_podsiti(zakladni_adresa=None):
         return kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite)
 
 def zobrazeni_podsiti(adresy_podsite):
-    print("0 - Předchozí menu \nZadej 1 až {0} na zobrazení podsítě, 1 je největší síť.".format(len(adresy_podsite)))
+    try:
+        print("0 - Předchozí menu \nZadej 1 až {0} na zobrazení podsítě, 1 je největší síť.".format(len(adresy_podsite)))
+    except:
+        print("Neexistující rozsah.")
+        return
     while True:
         try:
             vyber = int(input("Zadej číslo: "))
@@ -494,6 +498,11 @@ def kontrola_pritomnosti(kontrolovana_data, predchozi_data=None):
 
 
 def zapsani_do_txt(site):
+    try:
+        print("0 - Předchozí menu \nZadej 1 až {0} na zobrazení podsítě, 1 je největší síť.".format(len(adresy_podsite)))
+    except:
+        print("Neexistující rozsah.")
+        return
     textak=open('Adresace.txt', "w+", encoding="utf=16")
     for index in range(0, len(site)):
         textak.write('''Síť {0}.
