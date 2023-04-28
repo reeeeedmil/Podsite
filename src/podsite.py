@@ -499,7 +499,10 @@ def kontrola_pritomnosti(kontrolovana_data, predchozi_data=None):
 
 def zapsani_do_txt(site):
     try:
-        print("0 - Předchozí menu \nZadej 1 až {0} na zobrazení podsítě, 1 je největší síť.".format(len(adresy_podsite)))
+        len(site)
+        if len(site) == 0:
+            print("Neexistující rozsah.")
+            return
     except:
         print("Neexistující rozsah.")
         return
