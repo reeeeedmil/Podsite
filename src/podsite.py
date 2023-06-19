@@ -1,3 +1,5 @@
+import xlsxwriter as excel
+
 ERROR_ZNAK = "Neplatný znak";
 ERROR_CISLO = "Nevhodné číslo";
 ERROR_ROZSAH = "Jsi mimo rozsah!";
@@ -171,13 +173,14 @@ def menu_hlavni():
 1 - Zadání základní IPv4 adresy
 2 - Zadání podsítí
 3 - Zobrazení podsítí
-4 - Zapsání do Adresace.txt''')
+4 - Zapsání do Adresace.txt
+5 - Zapsání do Adresace.xlsx''')
         while True:
             try:
                 vyber = int(input("Zadej výběr: "))
             except:
                 print(ERROR_ZNAK)
-            if vyber >= 0 and vyber <= 4:
+            if vyber >= 0 and vyber <= 5:
                 break
             else:
                 print(ERROR_CISLO)
@@ -187,6 +190,7 @@ def menu_hlavni():
             case 2: adresy_podsite = kontrola_pritomnosti(menu_zadani_podsiti(zakladni_adresa), adresy_podsite)
             case 3: zobrazeni_podsiti(adresy_podsite)
             case 4: zapsani_do_txt(adresy_podsite)
+            case 5: zapsani_do_xlsx(adresy_podsite)
 
 def menu_zadani_podsiti(zakladni_adresa=None):
     vyber = -1
@@ -279,11 +283,24 @@ def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
         
     return adresy_siti
 
+def kontrola_zakladniho_bytu(byte):
+        try:
+            byte = int(byte)
+            if byte >= 0 and byte <= 255:
+                return byte, True #true jakoze je v pohode
+            else:
+                print(ERROR_ROZSAH)
+                return byte, False #false jakoze neni ok    
+        except:
+            print(ERROR_ZNAK)
+            return byte, False #false jakoze neni ok
+        
+
 def pocet_adres_na_prefix(pocet_hostu):
     pocet_hostu -= 1
     pocet_hostu = bin(pocet_hostu)
-    nuly_prefixu = len(pocet_hostu)-2 #toto je protože bin() dá do stringu 0b před číslo -> musí také se odečíst od délky
-    prefix = 32-nuly_prefixu
+    jednicky_prefixu = len(pocet_hostu)-2 #toto je protože bin() dá do stringu 0b před číslo -> musí také se odečíst od délky
+    prefix = 32-jednicky_prefixu
     return prefix
 
 def prefix_na_pocet_hostu(prefix):
@@ -294,10 +311,6 @@ def prefix_na_pocet_hostu(prefix):
     return pocet_adres+1
 
 
-        
-    return prvni_byte, druhy_byte, treti_byte, ctvrty_byte
-
-
 def input_zakladni_ipv4_adresy():
     zakladni_adresa = Sit()
     prvni_byte = -1
@@ -305,39 +318,27 @@ def input_zakladni_ipv4_adresy():
     treti_byte = -1
     ctvrty_byte = -1
     while True:
-        try:
-            prvni_byte = int(input("Zadej první byte: "))
-        except:
-            print(ERROR_ZNAK)
-        if prvni_byte >= 0 and prvni_byte <= 255:
-            break
-        else:
-            print(ERROR_ROZSAH)
-            continue
+            prvni_byte, vhodnost_bytu = kontrola_zakladniho_bytu(input("Zadej první byte: "))
+            if vhodnost_bytu == True:
+                break
+            else:
+                continue
 
  
     while True:
-        try:
-            druhy_byte = int(input("Zadej druhý byte: "))
-        except:
-            print(ERROR_ZNAK)
-        if druhy_byte >= 0 and druhy_byte <= 255:
-            break
-        else:
-            print(ERROR_ROZSAH)
-            continue
+            druhy_byte, vhodnost_bytu = kontrola_zakladniho_bytu(input("Zadej druhý byte: "))
+            if vhodnost_bytu == True:
+                break
+            else:
+                continue
         
         
     while True:
-        try:
-            treti_byte = int(input("Zadej třetí byte: "))
-        except:
-            print(ERROR_ZNAK)
-        if treti_byte >= 0 and treti_byte <= 255:
-            break
-        else:
-            print(ERROR_ROZSAH)
-            continue
+            treti_byte, vhodnost_bytu = kontrola_zakladniho_bytu(input("Zadej třetí byte: "))
+            if vhodnost_bytu == True:
+                break
+            else:
+                continue
         
         
     while True:
@@ -524,8 +525,59 @@ Wildcard maska: {16}.{17}.{18}.{19}
     site[index].treti_byte_wildcard_masky, site[index].ctvrty_byte_wildcard_masky))
     textak.close()
     print("Zapsání úspěšné.\n")
+    
+
+def zapsani_do_xlsx(site):
+    adresace = excel.Workbook('Adresace.xlsx')
+    tabulka = adresace.add_worksheet()
+    
+    tabulka.set_column(0, 0, 15)
+    tabulka.write('A2', 'Adresa sítě')
+    tabulka.write('A3', 'Adresa broadcast')
+    
+    tabulka.write('A5', 'Počet adres')
+    tabulka.write('A6', 'Počet hostů')
+    
+    tabulka.write('A8', 'Prefix')
+    tabulka.write('A9', 'Maska')
+    tabulka.write('A10', 'Wildcard maska')
+    
+    konecny_znak = chr(ord('A')+len(site))
+    rozsah = "B2:"+konecny_znak+"10"
+    print(konecny_znak)
+    print(rozsah)
+    tabulka.add_table(rozsah)
+    index=1
+    for sit in site:
+        znak = chr(index+ord('A'))
+        
+        cislo_site = ["Síť "+str(index)+"."]
+        adresa_site = [str(sit.prvni_byte)+"."+str(sit.druhy_byte)+"."+str(sit.treti_byte)+"."+str(sit.ctvrty_byte)]
+        adresa_broadcast = [str(sit.prvni_byte_broadcast)+"."+str(sit.druhy_byte_broadcast)+"."+str(sit.treti_byte_broadcast)+"."+str(sit.ctvrty_byte_broadcast)]
+    
+        maska = [str(sit.prvni_byte_masky)+"."+str(sit.druhy_byte_masky)+"."+str(sit.treti_byte_masky)+"."+str(sit.ctvrty_byte_masky)]
+        wildcard = [str(sit.prvni_byte_wildcard_masky)+"."+str(sit.druhy_byte_wildcard_masky)+"."+str(sit.treti_byte_wildcard_masky)+"."+str(sit.ctvrty_byte_wildcard_masky)]
 
 
-# MAIN
-print("Program na podsítě")
+        tabulka.set_column(index, index, 25)
+    
+        tabulka.write_row(f'{znak}1', cislo_site)
+        tabulka.write_row(f'{znak}2', adresa_site)
+        tabulka.write_row(f'{znak}3', adresa_broadcast)
+        
+        tabulka.write_row(f'{znak}5', [str(sit.pocet_hostu)])
+        tabulka.write_row(f'{znak}6', [str(sit.pocet_hostu-2)])
+        
+        tabulka.write_row(f'{znak}8', [str(sit.prefix)])
+        tabulka.write_row(f'{znak}9', maska)
+        tabulka.write_row(f'{znak}10', wildcard)
+        
+        
+        
+        
+        index+=1
+
+    adresace.close()
+    
+print("Program na podsítě\n- Radmil Hrbek")
 menu_hlavni()
