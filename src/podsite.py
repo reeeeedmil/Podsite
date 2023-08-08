@@ -37,51 +37,11 @@ class Sit:
         self.treti_byte = treti
         self.ctvrty_byte = ctvrty
             
-    def update_broadcast(self, pocet_hostu):
-        zvyseni_prvniho_bytu, zvyseni_druheho_bytu, zvyseni_tretiho_bytu = 0, 0, 0
-        prvni_byte = self.prvni_byte
-        druhy_byte = self.druhy_byte
-        treti_byte = self.treti_byte
-        ctvrty_byte = pocet_hostu+self.ctvrty_byte
-        pouzite_byty = 0
-        posledni_zvetseni = 0
-    
-        while ctvrty_byte >= 256:
-            ctvrty_byte -= 256
-            zvyseni_tretiho_bytu += 1
-        treti_byte += zvyseni_tretiho_bytu
-    
-        while treti_byte >= 256:
-            treti_byte -= 256
-            zvyseni_druheho_bytu += 1
-        druhy_byte += zvyseni_druheho_bytu
-    
-        while druhy_byte >= 256:
-            druhy_byte -= 256
-            zvyseni_prvniho_bytu += 1
-        prvni_byte += zvyseni_prvniho_bytu
-
-        if prvni_byte != self.prvni_byte:
-            posledni_zvetseni = 1
-        elif druhy_byte != self.druhy_byte:
-            posledni_zvetseni = 2
-        elif treti_byte != self.treti_byte:
-            posledni_zvetseni = 3
-        else:
-            posledni_zvetseni = 4
-        
-        
-        match posledni_zvetseni:
-            case 4: ctvrty_byte-=1
-            case 3: treti_byte-=1; ctvrty_byte=255 
-            case 2: druhy_byte-=1; treti_byte=255; ctvrty_byte=255
-            case 1: prvni_byte-=1; druhy_byte=255; treti_byte=255; ctvrty_byte=255
-        
-        
-        self.prvni_byte_broadcast = prvni_byte
-        self.druhy_byte_broadcast = druhy_byte
-        self.treti_byte_broadcast  = treti_byte
-        self.ctvrty_byte_broadcast = ctvrty_byte
+    def update_broadcast(self):
+        self.prvni_byte_broadcast = self.prvni_byte|self.prvni_byte_wildcard_masky
+        self.druhy_byte_broadcast = self.druhy_byte|self.druhy_byte_wildcard_masky
+        self.treti_byte_broadcast  = self.treti_byte|self.treti_byte_wildcard_masky
+        self.ctvrty_byte_broadcast = self.ctvrty_byte|self.ctvrty_byte_wildcard_masky
         
     def update_prefix(self, prefix, pocet_hostu):
         self.prefix = prefix
@@ -118,46 +78,16 @@ class Sit:
             soucet_pouzitych_cisel_prefixu += mocnina
         
                       
-        self.prvni_byte_masky = prvni_byte_masky
-        self.druhy_byte_masky = druhy_byte_masky
-        self.treti_byte_masky = treti_byte_masky
-        self.ctvrty_byte_masky = ctvrty_byte_masky
+        self.prvni_byte_masky = int(2**((self.prefix)&255))
+        self.druhy_byte_masky = int(2**((self.prefix-8)&255))
+        self.treti_byte_masky = int(2**((self.prefix-16)&255))
+        self.ctvrty_byte_masky = int(2**((self.prefix-24)&255))
         
     def update_wildcard_maska(self):
-        prvni_byte_wildcard_masky = 0
-        druhy_byte_wildcard_masky = 0
-        treti_byte_wildcard_masky = 0
-        ctvrty_byte_wildcard_masky = 0
-        soucet_pouzitych_cisel_prefixu = 0
-    
-        if self.prefix < 8:
-            mocnina = 8-self.prefix-soucet_pouzitych_cisel_prefixu
-            prvni_byte_wildcard_masky = 0+(2**mocnina)-1
-            soucet_pouzitych_cisel_prefixu += mocnina
-        
-    
-        if self.prefix < 16:
-            mocnina = 16-self.prefix-soucet_pouzitych_cisel_prefixu
-            druhy_byte_wildcard_masky = 0+(2**mocnina)-1
-            soucet_pouzitych_cisel_prefixu += mocnina
-        
-        
-        if self.prefix < 24:
-            mocnina = 24-self.prefix-soucet_pouzitych_cisel_prefixu
-            treti_byte_wildcard_masky = 0+(2**mocnina)-1
-            soucet_pouzitych_cisel_prefixu += mocnina
-        
-    
-        if self.prefix < 32:
-            mocnina = 32-self.prefix-soucet_pouzitych_cisel_prefixu
-            ctvrty_byte_wildcard_masky = 0+(2**mocnina)-1
-            soucet_pouzitych_cisel_prefixu += mocnina
-        
-                      
-        self.prvni_byte_wildcard_masky = prvni_byte_wildcard_masky
-        self.druhy_byte_wildcard_masky = druhy_byte_wildcard_masky
-        self.treti_byte_wildcard_masky = treti_byte_wildcard_masky
-        self.ctvrty_byte_wildcard_masky = ctvrty_byte_wildcard_masky 
+        self.prvni_byte_wildcard_masky = ~self.prvni_byte_masky & 255
+        self.druhy_byte_wildcard_masky = ~self.druhy_byte_masky & 255
+        self.treti_byte_wildcard_masky = ~self.treti_byte_masky & 255
+        self.ctvrty_byte_wildcard_masky = ~self.ctvrty_byte_masky & 255
         
         
 
@@ -277,7 +207,7 @@ def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
         
         
         
-        adresa.update_broadcast(podsite[cislo_site])
+        adresa.update_broadcast()
         
         adresy_siti.append(adresa)
         
