@@ -43,45 +43,30 @@ class Sit:
         self.treti_byte_broadcast  = self.treti_byte|self.treti_byte_wildcard_masky
         self.ctvrty_byte_broadcast = self.ctvrty_byte|self.ctvrty_byte_wildcard_masky
         
-    def update_prefix(self, prefix, pocet_hostu):
+    def update_prefix(self, prefix):
         self.prefix = prefix
-        self.pocet_hostu = pocet_hostu
+        self.pocet_hostu = 2**(32-prefix)
         
     def update_maska(self):
-        prvni_byte_masky = 255
-        druhy_byte_masky = 255
-        treti_byte_masky = 255
-        ctvrty_byte_masky = 255
-        soucet_pouzitych_cisel_prefixu = 0
-    
-        if self.prefix < 8:
-            mocnina = 8-self.prefix-soucet_pouzitych_cisel_prefixu
-            prvni_byte_masky = 255-(2**mocnina)+1
-            soucet_pouzitych_cisel_prefixu += mocnina
-        
-    
-        if self.prefix < 16:
-            mocnina = 16-self.prefix-soucet_pouzitych_cisel_prefixu
-            druhy_byte_masky = 255-(2**mocnina)+1
-            soucet_pouzitych_cisel_prefixu += mocnina
-        
-        
-        if self.prefix < 24:
-            mocnina = 24-self.prefix-soucet_pouzitych_cisel_prefixu
-            treti_byte_masky = 255-(2**mocnina)+1
-            soucet_pouzitych_cisel_prefixu += mocnina
-        
-    
-        if self.prefix < 32:
-            mocnina = 32-self.prefix-soucet_pouzitych_cisel_prefixu
-            ctvrty_byte_masky = 255-(2**mocnina)+1
-            soucet_pouzitych_cisel_prefixu += mocnina
-        
-                      
-        self.prvni_byte_masky = int(2**((self.prefix)&255))
-        self.druhy_byte_masky = int(2**((self.prefix-8)&255))
-        self.treti_byte_masky = int(2**((self.prefix-16)&255))
-        self.ctvrty_byte_masky = int(2**((self.prefix-24)&255))
+        maska = 2**32 - 2**(32-self.prefix)
+        binarni_maska = format(maska, 'b')
+        maska_bytes = [(binarni_maska[i:i + 8]) for i in range (0, len(binarni_maska), 8)]
+        #
+        # list comprehension vysvetleni
+        # [i:i + 8] => split stringu od n do n+7 znaku (napr. 0,7); +7 protoze posledni znak se nepocita
+        # for i in range => vytvori cisla znaku na split
+        # 0, len(binarni_maska), 8 => zacne indexovat od 0, jde az do konce masky(32-1), skace po 8 znacich => 0,7; 8,15; 16,23; 24,31
+        # stejny jako:
+        #
+        # maska_bytes = []
+        # for i in range(0, len(binarni_maska), 8):
+        #       maska_bytes.append(binarni_maska[i:i+8])
+        #
+        #
+        self.prvni_byte_masky = int(maska_bytes[0], 2)
+        self.druhy_byte_masky = int(maska_bytes[1], 2)
+        self.treti_byte_masky = int(maska_bytes[2], 2)
+        self.ctvrty_byte_masky = int(maska_bytes[3], 2)
         
     def update_wildcard_maska(self):
         self.prvni_byte_wildcard_masky = ~self.prvni_byte_masky & 255
@@ -196,14 +181,16 @@ def kombinace_zakladni_adresy_a_podsiti(zakladni_adresa, podsite):
     for cislo_site in range(0, len(podsite)):
         adresa = Sit()
         
+        adresa.update_prefix(pocet_adres_na_prefix(podsite[cislo_site]))
+
+        adresa.update_maska()
+        adresa.update_wildcard_maska()
+
         adresa.update_bytes(zakladni_adresa.prvni_byte, zakladni_adresa.druhy_byte, zakladni_adresa.treti_byte, soucet_ctvrtych_bytu)
         soucet_ctvrtych_bytu += podsite[cislo_site]
         
-        adresa.update_prefix(pocet_adres_na_prefix(podsite[cislo_site]), podsite[cislo_site])
         
-        adresa.update_maska()
         
-        adresa.update_wildcard_maska()
         
         
         
@@ -226,11 +213,8 @@ def kontrola_zakladniho_bytu(byte):
             return byte, False #false jakoze neni ok
         
 
-def pocet_adres_na_prefix(pocet_hostu):
-    pocet_hostu -= 1
-    pocet_hostu = bin(pocet_hostu)
-    jednicky_prefixu = len(pocet_hostu)-2 #toto je protože bin() dá do stringu 0b před číslo -> musí také se odečíst od délky
-    prefix = 32-jednicky_prefixu
+def pocet_adres_na_prefix(pocet_adres):
+    return 32 - len( format(pocet_adres-1, 'b') )
     return prefix
 
 def prefix_na_pocet_hostu(prefix):
@@ -247,6 +231,7 @@ def input_zakladni_ipv4_adresy():
     druhy_byte = -1
     treti_byte = -1
     ctvrty_byte = -1
+    prefix = -1
     while True:
             prvni_byte, vhodnost_bytu = kontrola_zakladniho_bytu(input("Zadej první byte: "))
             if vhodnost_bytu == True:
@@ -298,8 +283,25 @@ def input_zakladni_ipv4_adresy():
         else:
             print(ERROR_ROZSAH)
             continue
+
+    while True:
+        try:
+            prefix = int(input('Zadej prefix základní sítě: '))
+            if prefix > 0 and prefix <= 32:
+                break
+            else:
+                print(ERROR_ROZSAH)
+                continue
+        except:
+            print(ERROR_ZNAK)
+            continue
         
-        
+    zakladni_adresa.update_prefix(prefix)
+    zakladni_adresa.update_maska()
+    prvni_byte = prvni_byte&zakladni_adresa.prvni_byte_masky&255
+    druhy_byte = druhy_byte&zakladni_adresa.druhy_byte_masky&255
+    treti_byte = treti_byte&zakladni_adresa.treti_byte_masky&255
+    ctvrty_byte = ctvrty_byte&zakladni_adresa.ctvrty_byte_masky&255
     zakladni_adresa.update_bytes(prvni_byte, druhy_byte, treti_byte, ctvrty_byte)
     print("{0}.{1}.{2}.{3}".format(
         zakladni_adresa.prvni_byte,
